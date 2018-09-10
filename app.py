@@ -10,6 +10,7 @@ import os
 import dash
 import dash_auth
 
+
 from models import mod_orders
 
 # Pour avoir les mois des dates en français
@@ -25,7 +26,7 @@ auth = dash_auth.BasicAuth(app, [[os.environ['appuser'],os.environ['apppass']]])
 server = app.server
 
 # Pour éviter les warnings dus au multipage layout
-#app.config.suppress_callback_exceptions = True
+app.config.suppress_callback_exceptions = True
 
 app.css.append_css({
     'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
