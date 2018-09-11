@@ -8,6 +8,10 @@ import math
 # Date d'aujourd'hui
 ajd = datetime.datetime.today().date()
 
+# Format d'affichage des entiers
+def format_entiers(nb):
+    return ['{:,.0f}'.format(x).replace(',', ' ')if not math.isnan(x) else math.nan for x in nb]
+
 # Format d'affichage des montants
 def format_montant(nb):
     return ['{:,.2f}'.format(x).replace(',', ' ') + ' €' if not math.isnan(x) else math.nan for x in nb]

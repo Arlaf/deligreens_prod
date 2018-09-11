@@ -16,15 +16,6 @@ class OrdersClass:
     def __init__(self):
         self.collections = mod_collections.CollectionsClass()
         
-        # Contient les informations des collections (title, handle, tax rate...)
-        self.df_collections = self.collections.df_collections
-        
-        # Donne les info des collections de chaque produit
-        self.df_col_prod = self.collections.df_col_prod
-        
-        # Nombre de collections max des produits
-        self.ncol_max = self.collections.ncol_max
-        
     def get_data(self, date):
         req = f"""SELECT o.order_number,
                     o.created_at,
@@ -36,9 +27,9 @@ class OrdersClass:
                     o.total_refund_cents,
                     li.variant_id,
                     li.quantity,
-                    li.buying_price_cents,
-                    li.selling_price_cents,
-                    li.pre_tax_price_cents,
+                    li.buying_price_cents AS buying_price_cent_ht,
+                    li.selling_price_cents AS selling_price_cent_ttc,
+                    li.pre_tax_price_cents AS selling_price_cent_ht,
                     li.tax_amount_cents,
                     li.tax_rate,
                     v.sku,
@@ -64,7 +55,7 @@ class OrdersClass:
         df_orders = df_orders.drop('financial_status', axis=1)
         
         # Ajout des collections des produits
-        df_orders = pd.merge(df_orders, self.df_col_prod, on="id_prod", how="left")
+        df_orders = pd.merge(df_orders, self.collections.df_col_prod, on="id_prod", how="left")
         
         # Ajout de la colonne semaine (qui contient en fait la date du lundi de la semaine en question)
         df_orders['week'] = [d - datetime.timedelta(days=d.weekday()) for d in df_orders['created_at']]
@@ -74,16 +65,20 @@ class OrdersClass:
         
         return df_orders
         
-    def filtrage(self, df_orders_json, rm_teammates, start, end):
+    def filtrage(self, df_orders_json, rm, start, end):
         
         df_orders = pd.read_json(df_orders_json, orient = 'split', convert_dates = ['created_at'])
         
-        if rm_teammates == ['rm_teammates']:
+        if 'rm_teammates' in rm:
             # Liste des équipiers
             teammates = ['dumontet.thibaut@gmail.com', 'dumontet.julie@gmail.com', 'laura.h.jalbert@gmail.com', 'rehmvincent@gmail.com', 'a.mechkar@gmail.com', 'helena.luber@gmail.com', 'martin.plancquaert@gmail.com', 'badieresoscar@gmail.com', 'steffina.tagoreraj@gmail.com', 'perono.jeremy@gmail.com', 'roger.virgil@gmail.com', 'boutiermorgane@gmail.com', 'idabmat@gmail.com', 'nadinelhubert@gmail.com', 'faure.remi@yahoo.fr', 'maxime.cisilin@gmail.com', 'voto.arthur@gmail.com', 'pedro7569@gmail.com']
-            # On retire les self.commandes des équipiers
+            # On retire commandes des équipiers
             df_orders = df_orders.loc[~df_orders.email.isin(teammates)]
         
+        if 'rm_delivery' in rm:
+            # On retire les product types Frais Livraison
+            df_orders = df_orders.loc[df_orders['product_type'] != 'Frais Livraison',:]
+            
         # Filtrage par date
         df_orders = df_orders.loc[(df_orders['created_at'] >= pd.Timestamp(start)) & (df_orders['created_at'] <= pd.Timestamp(end)),:].copy()
         

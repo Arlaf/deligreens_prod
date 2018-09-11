@@ -31,11 +31,11 @@ def data_collection(n, debut):
 @app.callback(
     Output('df_orders_storage', 'children'),
     [Input('df_orders_init_storage', 'children'),
-     Input('box_rm_teammates', 'values'),
+     Input('box_rm', 'values'),
      Input('date_import_orders', 'start_date'),
      Input('date_import_orders', 'end_date')])
-def filter_data(df_orders_json, rm_teammates, start, end):
-    df_orders = orders.filtrage(df_orders_json, rm_teammates, start, end)
+def filter_data(df_orders_json, rm, start, end):
+    df_orders = orders.filtrage(df_orders_json, rm, start, end)
     return df_orders.to_json(date_format = 'iso', orient = 'split')
 
 @app.callback(
@@ -52,10 +52,18 @@ def show_collections_list(n):
 @app.callback(
     Output('graph_sells_evolution', 'figure'),
     [Input('df_orders_storage', 'children'),
-     Input('collections_clecklist', 'value')])
-def show_graph_sells_evolution(df_orders_json, collections):
-    figure = sells.construct_graph_sells_evolution(df_orders_json, collections)
-    return figure
+     Input('dropdown_collections', 'value'),
+     Input('dropdown_variable', 'value'),
+     Input('radio_level', 'value'),
+     Input('radio_duration', 'value'),
+     Input('box_pct', 'values')])
+def show_graph_evolution(df_orders_json, col, variable, level, duration, pct):
+    pct = pct == ['pct']
+    if col == []:
+        return None
+    else:
+        figure = sells.construct_graph_evolution(df_orders_json, col, variable, level, duration, pct)
+        return figure
     
 if __name__ == '__main__':
     app.run_server(debug=True)
