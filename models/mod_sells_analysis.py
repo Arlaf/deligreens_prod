@@ -8,7 +8,6 @@ Created on Mon Sep 10 13:22:05 2018
 import plotly.graph_objs as go
 import utilitaires as util
 import pandas as pd
-import math
 import datetime
 
 def col_agg(group):
