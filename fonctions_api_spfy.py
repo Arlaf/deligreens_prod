@@ -23,6 +23,7 @@ def get_product_list(id_col):
 #    start_time = time.time()
     # Récupération du nombre de produits de la collection
     r = requests.get('https://courtcircuit.myshopify.com/admin/collects/count.json?collection_id=' + str(id_col), auth = auth)
+    print(r.json())
     nprod = r.json()['count']
 #    print('Requete COUNT : ' + str(round(time.time() - start_time,3)))
     

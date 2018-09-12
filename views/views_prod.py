@@ -83,6 +83,6 @@ def generate_html():
         html.Div(id = 'df_orders_init_storage', style = {'display': 'none'}),
 #        html.Div(id = 'collections_storage', style = {'display': 'none'}),
         html.Div(id = 'df_orders_storage', style = {'display': 'none'})
-    ], style = {'padding-left':'15px'})
+    ], style = {'padding-left':'7px'})
     
     return layout
