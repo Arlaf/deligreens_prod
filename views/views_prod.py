@@ -29,14 +29,14 @@ def generate_html():
                 end_date = util.ajd
             ),
             html.Button(id = 'import_button', n_clicks = 0, children = 'Réimporter', style = {'margin' : '0px 0px 0px 10px'}),
+            dcc.Checklist(
+                id = 'box_rm',
+                options = [{'label' : 'Ignorer les commandes des teammates', 'value' : 'rm_teammates'},
+                           {'label' : 'Ignorer le product type Frais Livraison', 'value' : 'rm_delivery'}],
+                values = ['rm_delivery'],
+                style = {'margin' : '10px 0px 0px 0px'}
+            )
         ], className = 'row'),
-        dcc.Checklist(
-            id = 'box_rm',
-            options = [{'label' : 'Ignorer les commandes des teammates', 'value' : 'rm_teammates'},
-                       {'label' : 'Ignorer le product type Frais Livraison', 'value' : 'rm_delivery'}],
-            values = ['rm_delivery'],
-            style = {'margin' : '10px 0px 0px 0px'}
-        ),
         html.Div([
             html.Div([
                 html.Label('Sélection des collections'),
@@ -83,6 +83,6 @@ def generate_html():
         html.Div(id = 'df_orders_init_storage', style = {'display': 'none'}),
 #        html.Div(id = 'collections_storage', style = {'display': 'none'}),
         html.Div(id = 'df_orders_storage', style = {'display': 'none'})
-    ])
+    ], style = {'padding-left':'15px'})
     
     return layout

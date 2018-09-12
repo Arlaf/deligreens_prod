@@ -22,11 +22,16 @@ app.layout = views_prod.generate_html()
 @app.callback(
     Output('df_orders_init_storage', 'children'),
     [Input('import_button', 'n_clicks')],
-    [State('date_import_orders', 'start_date')])
-def data_collection(n, debut):
+    [State('date_import_orders', 'start_date'),
+     State('date_import_orders', 'end_date')])
+def data_collection(n, start, end):
 #    yield pd.DataFrame() # On renvoie au serveur quelque chose dès le début pour éviter le timeout si les calculs prennent plus de 30 sec
-    df_orders = orders.get_data(debut)
-    return df_orders.to_json(date_format = 'iso', orient = 'split')
+    # On ne relance l'importation que si la plage de dates saisie ne rentre pas dans ce qui a déjà été importé
+    if orders.start_import == None: # On la lance si c'est le lancement de l'application
+        orders.get_data(start, end)
+    elif (orders.start_import > start) | (orders.end_import < end): # On la lance si une des dates dépasse les précédentes
+        orders.get_data(start, end)
+    return orders.df_orders.to_json(date_format = 'iso', orient = 'split')
 
 @app.callback(
     Output('df_orders_storage', 'children'),

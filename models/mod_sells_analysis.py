@@ -13,18 +13,15 @@ import datetime
 
 def col_agg(group):
     # Sommes des ventes HT
-    c1 = sum(group['quantity'] * group['selling_price_cent_ht'])/100
+    # Dans la bdd core, dans la table line_items, le selling_price_cent est le prix TTC à l'unité
+    # Alors que le pre_tax_price est le prix HT mais PAS A L'UNITE, pour toute la quantité commandée
+    c1 = group['selling_price_cent_ht'].sum()/100
     # Sommes des cogs HT
     cogs = sum(group['quantity'] * group['buying_price_cent_ht'])/100
     # Marge brute
     c2 = c1 - cogs
     # Nombre de produits vendus
     c3 = group['quantity'].sum()
-    # Les mêmes colonnes mais seulement pour les produits ayant plus d'une collection
-#    group2 = group.loc[]
-#    c12 = 
-#    c22 =
-#    c32 =
     colnames = ['sells', 'margin', 'products_sold']
     return pd.Series([c1,c2,c3], index = colnames)
 
@@ -101,7 +98,8 @@ def construct_graph_evolution(df_orders_json, collections, variable, level, dura
     
     layout = {'barmode' : 'stack',
               'title' : 'Evolution ' + prep + label_var + ' par ' + label_dur,
-              'yaxis' : {'title' : label_var.capitalize()}}
+              'yaxis' : {'title' : label_var.capitalize()},
+              'height' : 650}
     
     figure = go.Figure(data = trace, layout = layout)
     return figure

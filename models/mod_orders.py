@@ -15,16 +15,20 @@ class OrdersClass:
     
     def __init__(self):
         self.collections = mod_collections.CollectionsClass()
+        # Pour stocker les dates limites d'import des données
+        self.start_import = None
+        self.end_import = None
         
-    def get_data(self, date):
+        self.df_orders = pd.DataFrame()
+        
+    def get_data(self, start, end):
+        
+        self.start_import = start
+        self.end_import = end
+        
         req = f"""SELECT o.order_number,
                     o.created_at,
                     o.financial_status,
-                    o.total_price_cents,
-                    o.total_discounts_cents,
-                    o.total_tax_cents,
-                    o.total_shipping_cents,
-                    o.total_refund_cents,
                     li.variant_id,
                     li.quantity,
                     li.buying_price_cents AS buying_price_cent_ht,
@@ -40,7 +44,7 @@ class OrdersClass:
                     o.client_id,
                     c.email
                 FROM line_items li, orders o, variants v, products p, clients c
-                WHERE o.id = li.order_id and li.variant_id = v.id and v.product_id = p.id and o.client_id = c.id and o.created_at >=  '{str(date)}'"""
+                WHERE o.id = li.order_id and li.variant_id = v.id and v.product_id = p.id and o.client_id = c.id and o.created_at BETWEEN '{str(start)}' AND '{str(end)}'"""
                 
         # Extraction des self.commandes de Core
         df_orders = fcore.extract_core(req)
@@ -63,7 +67,10 @@ class OrdersClass:
         # Ajout de la colonne mois (qui contient en fait la date 1er jour du mois)
         df_orders['month'] = [datetime.date(d.year, d.month, 1) for d in df_orders['created_at']]
         
-        return df_orders
+        # Pas de return mais stockage du df_orders dans l'instance de la classe
+        self.df_orders = df_orders
+        
+        
         
     def filtrage(self, df_orders_json, rm, start, end):
         
