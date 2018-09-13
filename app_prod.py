@@ -11,6 +11,7 @@ from dash.dependencies import Input, Output, State
 from app import app
 from models import mod_orders, mod_sells_analysis as sells
 from views import views_prod
+import utilitaires as util
 
 orders = mod_orders.OrdersClass()
 
@@ -56,8 +57,8 @@ def show_collections_list(n):
     [Input('df_orders_storage', 'children'),
      Input('radio_duration', 'value'),
      Input('radio_level', 'value')])
-def get_table_evolution(df_orders_json, level, duration):
-    table = sells.construct_table_evolution(df_orders_json, level, duration) 
+def get_table_evolution(df_orders_json, duration, level):
+    table = sells.construct_table_evolution(df_orders_json, duration, level) 
     return table.to_json(orient = 'split', date_format = 'iso')
 
 @app.callback(
@@ -75,6 +76,18 @@ def show_graph_evolution(table_evolution_json, col, variable, pct, duration, lev
     else:
         figure = sells.construct_graph_evolution(table_evolution_json, col, variable, pct, duration, level)
         return figure
+    
+@app.callback(
+    Output('table_sells_evolution', 'children'),
+    [Input('table_evolution_storage', 'children'),
+     Input('dropdown_collections', 'value'),
+     Input('dropdown_variable', 'value'),
+     Input('box_pct', 'values')],
+    [State('radio_duration', 'value'),
+     State('radio_level', 'value')])
+def show_table_evolution(table_evolution_json, collections, variable, pct, duration, level):
+    table = sells.display_table_evolution(table_evolution_json, collections, variable, pct, duration, level)
+    return util.generate_table(table, centered=True)
     
 if __name__ == '__main__':
     app.run_server(debug=True)

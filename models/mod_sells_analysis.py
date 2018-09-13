@@ -10,7 +10,7 @@ import utilitaires as util
 import pandas as pd
 import datetime
 
-def level_duration_agg(group):
+def level_duration_agg(group, level):
     """Agrège df_orders et calcule les mesures pour chaque période et chaque niveau de produit"""
     # Sommes des ventes HT
     # Dans la bdd core, dans la table line_items, le selling_price_cent est le prix TTC à l'unité
@@ -22,8 +22,13 @@ def level_duration_agg(group):
     c2 = c1 - cogs
     # Nombre de produits vendus
     c3 = group['quantity'].sum()
+    cols = [c1, c2, c3]
     colnames = ['sells', 'margin', 'products_sold']
-    return pd.Series([c1,c2,c3], index = colnames)
+    if level == 'product_type':
+        c4 = group['title0'].reset_index(drop=True)[0]
+        cols += [c4]
+        colnames += ['title0']
+    return pd.Series(cols, index = colnames)
 
 #def tot_agg(group, variable):
 #    c1 = group[variable].sum()
@@ -52,7 +57,7 @@ def construct_table_evolution(df_orders_json, duration, level):
     if level == 'collections':
         level = 'title0'
     # Agregation par niveau et période
-    table = df_orders.groupby([duration,level]).apply(level_duration_agg).unstack(fill_value = 0).stack().reset_index()
+    table = df_orders.groupby([duration,level]).apply(level_duration_agg, level).unstack(fill_value = 0).stack().reset_index()
     # Création des colonnes des totaux par périodes et des pourcentages de chaque niveau de produit
     table = table.groupby(duration).apply(tot_agg)
     return table
@@ -119,3 +124,32 @@ def construct_graph_evolution(table_evolution_json, collections, variable, pct, 
     
     figure = go.Figure(data = trace, layout = layout)
     return figure
+
+def display_table_evolution(table_evolution_json, collections, variable, pct, duration, level):
+    table = pd.read_json(table_evolution_json, orient = 'split', convert_dates = [duration])
+    table[duration] = [datetime.date(d.year, d.month, d.day) for d in pd.to_datetime(table[duration])]
+    
+    # On ne garde que les collections sélectionnées
+    table = table.loc[table['title0'].isin(collections),:]
+
+    if level == 'collections':
+        name = 'Collection'
+        level = 'title0'
+    else:
+        name = 'Product type'
+    table = table.rename({level : name}, axis = 'columns')
+        
+    if pct:
+        variable = variable + '_pct'
+        table[variable] = util.format_pct(table[variable])
+    else:
+        if variable == 'products_sold':
+            table[variable] = util.format_entiers(table[variable])
+        else:
+            table[variable] = util.format_montant(table[variable])
+    
+    table[duration] = [d.strftime('%B %y').capitalize() if duration == 'month' else d.strftime('%d %B %y') for d in table[duration]]
+    
+    table = table.pivot(index=name, columns=duration, values=variable).reset_index()
+    
+    return table

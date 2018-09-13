@@ -39,7 +39,6 @@ class CollectionsClass:
                                                                                                                                                 'Taux TVA' : 'tva'+str(i)}, axis='columns')
 #        self.df_col_prod = pd.read_csv('df_col_prod.csv')
         
-        
 
     def product_agg(self, group):
         collections = group['id_col'].tolist()
@@ -49,12 +48,12 @@ class CollectionsClass:
     
     def create_collections_dropdown(self):
         options = [{'label' : 'Aucune',
-                    'value' :'0'}]
+                    'value' :'Aucune'}]
         for col in range(len(self.df_collections)):
             temp = {'label' : self.df_collections['Title'][col],
                     'value' : self.df_collections['Title'][col]}
             options += [temp]
         return dcc.Dropdown(id = 'dropdown_collections',
                             options = options,
-                            value = self.df_collections['Title'].tolist(),
+                            value = self.df_collections['Title'].tolist() + ['Aucune'],
                             multi = True)

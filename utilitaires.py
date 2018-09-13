@@ -21,7 +21,7 @@ def format_pct(pct):
 #    return '{:.1f}'.format(100*pct)
     return ['{:.1f}'.format(100*x) + ' %' if not math.isnan(x) else math.nan for x in pct]
 
-def generate_table(dataframe, max_rows=20):
+def generate_table(dataframe, max_rows=20, centered=False):
     #Given dataframe, return template generated using Dash components
     return html.Table(
         # Header
@@ -30,8 +30,8 @@ def generate_table(dataframe, max_rows=20):
         # Body
         [html.Tr([
             html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
-        ]) for i in range(min(len(dataframe), max_rows))]
-    )
+        ]) for i in range(min(len(dataframe), max_rows))],
+    style = {'margin' : '0 auto'})
     
 def lastday_of_month(d):
     #Takes a datetime.date and returns the date for the last day in the same month.

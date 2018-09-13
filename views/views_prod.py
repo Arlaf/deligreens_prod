@@ -78,6 +78,8 @@ def generate_html():
         ], className = 'row', style = {'margin' : '10px 0px 0px 0px'}),
 
         dcc.Graph(id = 'graph_sells_evolution'),
+        html.Div(id = 'table_sells_evolution'),
+
         
         # Divs invisibles qui stockeront les données intermédiaires
         html.Div(id = 'df_orders_init_storage', style = {'display': 'none'}),
