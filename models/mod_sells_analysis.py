@@ -10,7 +10,8 @@ import utilitaires as util
 import pandas as pd
 import datetime
 
-def col_agg(group):
+def level_duration_agg(group):
+    """Agrège df_orders et calcule les mesures pour chaque période et chaque niveau de produit"""
     # Sommes des ventes HT
     # Dans la bdd core, dans la table line_items, le selling_price_cent est le prix TTC à l'unité
     # Alors que le pre_tax_price est le prix HT mais PAS A L'UNITE, pour toute la quantité commandée
@@ -24,11 +25,21 @@ def col_agg(group):
     colnames = ['sells', 'margin', 'products_sold']
     return pd.Series([c1,c2,c3], index = colnames)
 
-def tot_agg(group, variable):
-    c1 = group[variable].sum()
-    return pd.Series([c1], index = [variable])
+#def tot_agg(group, variable):
+#    c1 = group[variable].sum()
+#    return pd.Series([c1], index = [variable])
+    
+def tot_agg(group):
+    """Ajoute au df groupé par période les colonnes des totaux et pourcentages de chaque variable"""
+    for var in ['sells', 'margin', 'products_sold']:
+        res = group[var].sum()
+        name_tot = var + '_tot'
+        group[name_tot] = res
+        name_pct = var + '_pct'
+        group[name_pct] = group[var]/group[name_tot]
+    return group
 
-def construct_graph_evolution(df_orders_json, collections, variable, level, duration, pct):
+def construct_table_evolution(df_orders_json, duration, level):
     df_orders = pd.read_json(df_orders_json, orient = 'split', convert_dates = ['created_at', 'week', 'month'])
     # La lecture du json a passé les id_col en float alors on les reconvertit en string
     df_orders['id_col0'] = [str(x)[:-2] for x in df_orders['id_col0']]
@@ -36,26 +47,32 @@ def construct_graph_evolution(df_orders_json, collections, variable, level, dura
     for date_col in ['created_at', 'week', 'month']:
         df_orders[date_col] = [datetime.date(d.year, d.month, d.day) for d in pd.to_datetime(df_orders[date_col])]
     
-    # On ne garde que les collections voulues
-    df_orders = df_orders.loc[df_orders['id_col0'].isin(collections), :]
+#    # On ne garde que les collections voulues
+#    df_orders = df_orders.loc[df_orders['id_col0'].isin(collections), :]
+    if level == 'collections':
+        level = 'title0'
+    # Agregation par niveau et période
+    table = df_orders.groupby([duration,level]).apply(level_duration_agg).unstack(fill_value = 0).stack().reset_index()
+    # Création des colonnes des totaux par périodes et des pourcentages de chaque niveau de produit
+    table = table.groupby(duration).apply(tot_agg)
+    return table
+        
     
-    if duration == 'day':
-        duration = 'created_at'
+def construct_graph_evolution(table_evolution_json, collections, variable, pct, duration, level):
+    table = pd.read_json(table_evolution_json, orient = 'split', convert_dates = [duration])
+    table[duration] = [datetime.date(d.year, d.month, d.day) for d in pd.to_datetime(table[duration])]
     
+    # On ne garde que les collections sélectionnées
+    table = table.loc[table['title0'].isin(collections),:]
+
     if level == 'collections':
         level = 'title0'
     
-    # Agregation
-    sells = df_orders.groupby([duration,level]).apply(col_agg).unstack(fill_value = 0).stack().reset_index()
-    
-    if pct:
-        totals = sells.groupby(duration).apply(tot_agg, variable = variable).reset_index()[variable]
-    
     trace = []
-    for lev in sells[level].unique():
-        df = sells.loc[sells[level] == lev, :]
+    for lev in table[level].unique():
+        df = table.loc[table[level] == lev, :]
         x = [d.strftime('%B %y').capitalize() if duration == 'month' else d.strftime('%d %B %y') for d in df[duration]]
-        y = df[variable].reset_index(drop=True)/totals if pct else df[variable]
+        y = df[variable+'_pct'] if pct else df[variable]
         # Evolution de la variable étudiée par rapport à la période précédente
         evo = util.format_pct(y - y.shift(1)) if pct else util.format_pct((y - y.shift(1))/y.shift(1))
         for i in range(len(evo)):

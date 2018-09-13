@@ -33,7 +33,7 @@ class CollectionsClass:
             # Puisqu'il est impossible de garder le type integer dans une colonne qui contient des valeurs manquantes (car NaN est un float), on utilise des 0 à la place des NaN
             col = 'id_col' + str(i)
             self.df_col_prod[col] = [x[i] if len(x) > i else 'Aucune' for x in self.df_col_prod['collections']]
-            # Ajout des titres et taxes des collection
+            # Ajout des titres et taxes des collections
             self.df_col_prod = pd.merge(self.df_col_prod, self.df_collections.rename({'Id' : col}, axis='columns'), on=col, how='left').rename({'Title' : 'title'+str(i),
                                                                                                                                                 'Handle' : 'handle'+str(i),
                                                                                                                                                 'Taux TVA' : 'tva'+str(i)}, axis='columns')
@@ -48,12 +48,13 @@ class CollectionsClass:
         return pd.Series([collections, n], index = column)
     
     def create_collections_dropdown(self):
-        options = []
+        options = [{'label' : 'Aucune',
+                    'value' :'0'}]
         for col in range(len(self.df_collections)):
             temp = {'label' : self.df_collections['Title'][col],
-                    'value' : self.df_collections['Id'][col]}
+                    'value' : self.df_collections['Title'][col]}
             options += [temp]
         return dcc.Dropdown(id = 'dropdown_collections',
                             options = options,
-                            value = self.df_collections['Id'].tolist(),
+                            value = self.df_collections['Title'].tolist(),
                             multi = True)

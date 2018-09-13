@@ -5,11 +5,8 @@ Created on Thu Sep  6 10:11:30 2018
 
 @author: arnaud
 """
-
-from dash.dependencies import Input, Output, State
-import dash_html_components as html
-import dash_core_components as dcc
 import pandas as pd
+from dash.dependencies import Input, Output, State
 
 from app import app
 from models import mod_orders, mod_sells_analysis as sells
@@ -50,24 +47,33 @@ def get_collections_list():
 
 @app.callback(
     Output('collections_clecklist', 'children'),
-    [Input('import_button', 'n_clicks')]) # Inutile mais je ne sais pas faire la même chose sans Input
+    [Input('import_button', 'n_clicks')]) # Inutile mais je n'ai pas trouvé comment faire la même chose sans Input
 def show_collections_list(n):
     return orders.collections.create_collections_dropdown()
 
 @app.callback(
-    Output('graph_sells_evolution', 'figure'),
+    Output('table_evolution_storage', 'children'),
     [Input('df_orders_storage', 'children'),
+     Input('radio_duration', 'value'),
+     Input('radio_level', 'value')])
+def get_table_evolution(df_orders_json, level, duration):
+    table = sells.construct_table_evolution(df_orders_json, level, duration) 
+    return table.to_json(orient = 'split', date_format = 'iso')
+
+@app.callback(
+    Output('graph_sells_evolution', 'figure'),
+    [Input('table_evolution_storage', 'children'),
      Input('dropdown_collections', 'value'),
      Input('dropdown_variable', 'value'),
-     Input('radio_level', 'value'),
-     Input('radio_duration', 'value'),
-     Input('box_pct', 'values')])
-def show_graph_evolution(df_orders_json, col, variable, level, duration, pct):
+     Input('box_pct', 'values')],
+    [State('radio_duration', 'value'),
+     State('radio_level', 'value')])
+def show_graph_evolution(table_evolution_json, col, variable, pct, duration, level):
     pct = pct == ['pct']
     if col == []:
         return None
     else:
-        figure = sells.construct_graph_evolution(df_orders_json, col, variable, level, duration, pct)
+        figure = sells.construct_graph_evolution(table_evolution_json, col, variable, pct, duration, level)
         return figure
     
 if __name__ == '__main__':

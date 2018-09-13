@@ -60,6 +60,8 @@ class OrdersClass:
         
         # Ajout des collections des produits
         df_orders = pd.merge(df_orders, self.collections.df_col_prod, on="id_prod", how="left")
+        df_orders.loc[df_orders.title0.isnull(),'title0'] = 'Aucune'
+        df_orders.loc[df_orders.title0.isnull(),'id_col0'] = '0'
         
         # Ajout de la colonne semaine (qui contient en fait la date du lundi de la semaine en question)
         df_orders['week'] = [d - datetime.timedelta(days=d.weekday()) for d in df_orders['created_at']]
